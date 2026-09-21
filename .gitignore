@@ -1,0 +1,16 @@
+.env
+.env.*
+!.env.example
+.env.bak
+free_models.json
+free_models.json.lock
+free_sync_state.json
+free_sync_state.json.lock
+*.lock
+__pycache__/
+*.py[cod]
+.venv/
+config.local.yaml
+runs.log
+news.md
+*.log
