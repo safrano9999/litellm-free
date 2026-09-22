@@ -34,6 +34,7 @@ PROVIDERS = {
     "groq": "https://api.groq.com/openai/v1",
     "kilo": "https://api.kilo.ai/api/gateway",
     "nous": "https://inference-api.nousresearch.com/v1",
+    "opencode": "https://opencode.ai/zen/v1",
 }
 KEY_ENV = {p: p.upper() + "_API_KEY" for p in PROVIDERS}
 SECRET_NAMES = {*KEY_ENV.values(), "CLIENT_KEY", "LITELLM_ADMIN_KEY"}
@@ -342,6 +343,12 @@ def free_models(provider, rows, cfg):
             free = not re.search(r"whisper|tts|guard|speech|transcri|orpheus", name, re.I)
         elif provider == "nous":
             free = name.endswith(":free") or (not suffix_present and matches(cfg.get("free_allowlist", []), name))
+        elif provider == "opencode":
+            # Zen exposes paid and free models together and marks free entries
+            # with a ``-free`` suffix (some compatible catalogs use ``:free``).
+            suffixes = cfg.get("free_suffixes", ["-free", ":free"])
+            free = any(name.endswith(suffix) for suffix in suffixes
+                       if isinstance(suffix, str) and suffix)
         else:
             free = (provider == "openrouter" and name.endswith(":free")) or (zero(price.get("prompt")) and zero(price.get("completion")))
             if provider == "kilo" and free:
@@ -477,7 +484,7 @@ class Sync:
         if provider == "openrouter":
             self.proxy.http.request("GET", cfg.get("api_base", PROVIDERS[provider]).rstrip("/") + "/key",
                                     key=key, label="OpenRouter key validation")
-        elif provider in {"kilo", "nous"}:
+        elif provider in {"kilo", "nous", "opencode"}:
             LOG.warning("%s: public catalog HTTP 200 does not prove key validity; verify authentication with inference", provider)
         base = cfg.get("api_base", PROVIDERS[provider]).rstrip("/")
         fingerprint = digest(key)[:8]

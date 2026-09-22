@@ -44,6 +44,16 @@
       "free_allowlist": [],
       "tags_mode": "auto",
       "proxy_catalog_path": null
+    },
+    "opencode": {
+      "enabled": true,
+      "api_base": "https://opencode.ai/zen/v1",
+      "rpm": null,
+      "tpm": null,
+      "allowlist": [],
+      "denylist": [],
+      "free_suffixes": ["-free", ":free"],
+      "proxy_catalog_path": null
     }
   }
 }

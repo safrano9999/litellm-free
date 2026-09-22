@@ -1,7 +1,7 @@
 # litellm-free
 
 Ein Python-3.11-Script synchronisiert kostenlose Chatmodelle von OpenRouter, Groq,
-Kilo Gateway und Nous Portal mit einem LiteLLM-Proxy. Verwaltung ausschließlich
+Kilo Gateway, Nous Portal und OpenCode Zen mit einem LiteLLM-Proxy. Verwaltung ausschließlich
 über HTTP; keine direkten Datenbankzugriffe. LiteLLM benötigt PostgreSQL und
 `STORE_MODEL_IN_DB=True`.
 
@@ -25,7 +25,8 @@ YAML-1.2-Teilmenge**; deshalb ist kein YAML-Paket erforderlich.
 
 `.env` bleibt die lokale Soll-Quelle für Tokens. Provider-Tokens werden zusätzlich
 über `/credentials` verschlüsselt durch LiteLLM persistiert, als
-`free-sync-openrouter`, `free-sync-groq`, `free-sync-kilo`, `free-sync-nous`.
+`free-sync-openrouter`, `free-sync-groq`, `free-sync-kilo`, `free-sync-nous` und
+`free-sync-opencode`.
 Deployments referenzieren nur den Credential-Namen; sie enthalten keine eigenen
 `api_key`/`api_base`-Werte. Leere oder fehlende Eingaben löschen niemals Credentials.
 Der Admin-Key muss bei jedem Lauf lokal verfügbar sein.
@@ -151,11 +152,20 @@ in `.env` geschrieben; bestehende Eingaben werden nicht verändert.
 | Groq | Chatmodelle des Free Tiers; Whisper, TTS, Guard und verwandte Nicht-Chatmodelle werden ausgeschlossen. Keine Garantie kostenloser Nutzung eines kostenpflichtigen Kontos. Limits gelten organisations- und modellbezogen, nicht pro Key. |
 | Kilo | `https://api.kilo.ai/api/gateway`, ohne `/v1`. Prompt, Completion und weitere gemeldete Preise müssen strikt null sein. Negative Platzhalterpreise werden abgelehnt. |
 | Nous | `:free`-Suffix gemäß Nutzerangabe. Fehlen solche IDs, ist eine ausdrücklich geprüfte `free_allowlist` nötig; andernfalls kein Abgleich und keine Löschung. |
+| OpenCode Zen | Katalog über `https://opencode.ai/zen/v1/models`. Die Antwort enthält kostenpflichtige und kostenlose Modelle ohne Preisfelder; standardmäßig werden nur IDs mit `-free` oder `:free` übernommen. Die Suffixe sind über `free_suffixes` konfigurierbar. |
 
 Kilos Modellkatalog ist öffentlich; kostenlose Inferenz ist laut
 [Gateway-Dokumentation](https://kilo.ai/docs/gateway/authentication) auch anonym
 möglich. Dieses Script überspringt dennoch gemäß Credential-Regel Provider ohne
 lokalen Token **und** ohne gespeichertes Credential.
+
+Der OpenCode-Zen-Katalog ist öffentlich abrufbar. Für Inferenz wird ein
+`OPENCODE_API_KEY` als `free-sync-opencode`-Credential hinterlegt; ein HTTP-200
+bei `/models` beweist allein nicht, dass dieser Token für Chat-Anfragen berechtigt
+ist. Das Script markiert deshalb auch hier nur die Katalogprüfung als erfolgreich
+und lässt die Inferenzberechtigung offen. Wenn der Key-Katalog weniger Modelle
+liefert als ein anonymer Abruf, gilt ausschließlich die Key-Sicht; öffentlich
+gelistete, mit dem Key nicht erreichbare Modelle werden nicht registriert.
 
 HTTP 200 auf öffentlichen Katalogen beweist nicht die Gültigkeit eines Tokens.
 OpenRouter wird zusätzlich über `/key` geprüft. **TODO/verifizieren:** Kilo- und
